@@ -1,9 +1,4 @@
-// Command engine runs the Anchor Engine as a standalone HTTP server — the
-// local/dev entry point. A Lambda deployment (§9) wraps the same
-// httpapi.Handler in an API Gateway proxy adapter instead; not built yet.
-//
-// Speaks plain HTTP only, deliberately — must run behind a TLS-terminating
-// proxy and never take traffic directly from an untrusted network.
+// Runs the Anchor Engine as a standalone HTTP server
 package main
 
 import (
