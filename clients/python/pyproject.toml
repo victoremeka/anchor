@@ -1,0 +1,18 @@
+[project]
+name = "anchor-client"
+version = "0.1.0"
+description = "Thin Python HTTP client for the Anchor Engine API"
+requires-python = ">=3.9"
+dependencies = [
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["anchor_client*"]
