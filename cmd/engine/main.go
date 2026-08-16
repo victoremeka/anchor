@@ -4,11 +4,13 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -59,6 +61,11 @@ func main() {
 		log.Error("reclaim sweep failed", "err", err)
 	})
 
+	if err := registerLinkedTables(e, os.Getenv("ANCHOR_LINKED_TABLES")); err != nil {
+		log.Error("invalid ANCHOR_LINKED_TABLES", "err", err)
+		os.Exit(1)
+	}
+
 	server := &http.Server{
 		Addr:              addr,
 		Handler:           httpapi.New(e, log).Mux(),
@@ -105,4 +112,23 @@ func envInt(key string, fallback int) (int, error) {
 		return fallback, nil
 	}
 	return strconv.Atoi(v)
+}
+
+// registerLinkedTables reads a comma separated list of table:id_column
+// pairs, for example "orders:order_id,users:user_id", and registers each
+// one with the engine so recall can freshness check memories linked to it.
+func registerLinkedTables(e *engine.Engine, spec string) error {
+	if spec == "" {
+		return nil
+	}
+	for pair := range strings.SplitSeq(spec, ",") {
+		table, idColumn, ok := strings.Cut(pair, ":")
+		if !ok || table == "" || idColumn == "" {
+			return fmt.Errorf("expected table:id_column, got %q", pair)
+		}
+		if err := e.RegisterTable(table, idColumn); err != nil {
+			return fmt.Errorf("register table %q: %w", table, err)
+		}
+	}
+	return nil
 }

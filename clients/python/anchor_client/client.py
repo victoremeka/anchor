@@ -215,6 +215,4 @@ def _unwrap(resp: requests.Response) -> Any:
         except ValueError:
             message = resp.text
         raise from_response(resp.status_code, message)
-    if not resp.content:
-        return {}
     return resp.json()
