@@ -18,7 +18,7 @@ Live deployment: https://d27whhcg0ttrqt.cloudfront.net
 ## CockroachDB features used
 
 - **Distributed Vector Indexing.** The `memories` table has a `VECTOR` column with a `VECTOR INDEX`, backing `recall`'s similarity search (`internal/engine/memory.go`).
-- **Managed MCP Server.** `demo/anchor_demo/observability.py` is a real MCP client (official SDK) that discovers a SQL capable tool on any MCP server it is pointed at and asks it real questions: flagged task count, pending effect count, queue depth per pool. It has been proven working end to end against a local reference MCP server backed by this same database (`demo/anchor_demo/mcp_server.py`); pointing it at CockroachDB Cloud's real Managed MCP Server endpoint is a two environment variable change (`ANCHOR_MCP_URL`, `ANCHOR_MCP_API_KEY`), no code change.
+- **Managed MCP Server.** `demo/anchor_demo/observability.py` is a real MCP client (official SDK) that discovers a SQL capable tool on any MCP server it is pointed at and asks it real questions: flagged task count, pending effect count, queue depth per pool. Proven working end to end against the real CockroachDB Cloud Managed MCP Server for the live cluster, service account API key authentication (`demo/run_observability.py`). A local reference MCP server (`demo/anchor_demo/mcp_server.py`) also exists for offline development against the same client code.
 
 ## AWS services used
 

@@ -1,0 +1,42 @@
+CockroachDB tools used
+
+1. Distributed Vector Indexing. The memories table (schema/schema.sql) stores a VECTOR(1536)
+   column with a VECTOR INDEX. The Engine's recall endpoint (internal/engine/memory.go) runs a
+   similarity search over that index, then separately checks the linked row's live value before
+   returning, so a recalled memory is never trusted blindly against stale application state.
+
+2. CockroachDB Cloud Managed MCP Server. demo/anchor_demo/observability.py is an MCP client
+   built on the official SDK. It discovers a SQL capable tool on whatever MCP server it is
+   pointed at, then answers real operational questions against the live database: how many
+   tasks are currently flagged, how many effects are stuck pending, queue depth per pool. This
+   keeps the observability agent's access to the database read only and audited on Cockroach's
+   side, never given the Engine's own read write credential. Proven end to end against the
+   real CockroachDB Cloud Managed MCP Server, live cluster, service account API key
+   authentication, cluster scoped connection (demo/run_observability.py).
+
+AWS services used
+
+1. Amazon ECS on Fargate. The Engine runs as a container, deployed live at
+   https://d27whhcg0ttrqt.cloudfront.net. Chosen over Lambda specifically because the Engine
+   runs a background reclaim sweep, a goroutine ticker that reclaims expired task leases.
+   Lambda freezes execution environments between invocations, and AWS's own documentation
+   warns that background work still running when that happens produces unreliable behavior.
+   Fargate keeps the process alive continuously, so the sweep runs on schedule as designed.
+
+2. Amazon ECR hosts the container image. AWS Secrets Manager holds the database credential,
+   scoped to a single IAM role that can read only that one secret. Amazon CloudFront terminates
+   public HTTPS in front of an internal ALB, since the Engine deliberately never terminates TLS
+   itself, matching the spec's requirement that TLS is always terminated outside the Engine
+   process.
+
+What to show in the demo video
+
+- POST /organizations and POST /agents against the live URL, proving real auth and real
+  database writes over the public internet.
+- One of the four chaos scenarios in demo/anchor_demo/scenarios, scenario_d_freshness is the
+  strongest: a human changes an order's status directly in the database, bypassing Anchor
+  entirely, and the very next recall reflects that change immediately even though the stored
+  memory content still says the old status. That is the "checked against live state" guarantee
+  made concrete, in under a minute of screen time.
+- Optionally, scenario_b_ambiguous: kill the Engine mid effect, show the task comes back
+  flagged for a human instead of silently retried or silently marked done.
