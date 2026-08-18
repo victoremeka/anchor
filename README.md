@@ -4,7 +4,6 @@ Transactional memory for AI agents, built on CockroachDB.
 
 Anchor is a reliability layer for agent memory and task state. A crashed task cannot cause a duplicate side effect. Two workers cannot claim the same task. A stalled claim cannot orphan a task forever. A recalled memory is checked against live state before it is returned.
 
-Full design rationale, guarantees, and the correctness test plan live in [docs/anchor-product-spec.md](docs/anchor-product-spec.md). Read that for the why behind every choice below.
 
 Live deployment: https://d27whhcg0ttrqt.cloudfront.net
 
@@ -81,13 +80,3 @@ Run the chaos scenarios (each one manages its own Engine subprocess and needs a 
 .venv/bin/python -m anchor_demo.scenarios.scenario_c_race
 .venv/bin/python -m anchor_demo.scenarios.scenario_d_freshness
 ```
-
-Run all tests:
-
-```
-.venv/bin/python -m pytest clients/python/tests demo/tests
-```
-
-## Deploying
-
-See [DEPLOYMENT_STATUS.txt](DEPLOYMENT_STATUS.txt) for the exact live AWS resource inventory and the reasoning behind each infrastructure decision.
