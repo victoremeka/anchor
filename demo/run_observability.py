@@ -5,6 +5,8 @@ from anchor_demo.observability import ObservabilityAgent
 
 MCP_URL = os.environ["ANCHOR_MCP_URL"]
 API_KEY = os.environ.get("ANCHOR_MCP_API_KEY")
+CLUSTER_ID = os.environ.get("ANCHOR_MCP_CLUSTER_ID")
+DATABASE = os.environ.get("ANCHOR_MCP_DATABASE", "defaultdb")
 
 QUESTIONS = {
     "flagged tasks": "SELECT count(*) AS n FROM tasks WHERE status = 'flagged'",
@@ -14,10 +16,10 @@ QUESTIONS = {
 
 
 async def main() -> None:
-    agent = ObservabilityAgent(MCP_URL, API_KEY)
+    agent = ObservabilityAgent(MCP_URL, API_KEY, CLUSTER_ID)
     print(f"connected tools: {[t.name for t in await agent.list_tools()]}")
     for label, sql in QUESTIONS.items():
-        answer = await agent.run_sql(sql)
+        answer = await agent.run_sql(sql, database=DATABASE)
         print(f"{label}: {answer}")
 
 

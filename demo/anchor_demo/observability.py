@@ -23,14 +23,17 @@ class ToolCallFailed(Exception):
 
 
 class ObservabilityAgent:
-    def __init__(self, mcp_url: str, api_key: Optional[str] = None):
+    def __init__(self, mcp_url: str, api_key: Optional[str] = None, cluster_id: Optional[str] = None):
         self._mcp_url = mcp_url
         self._api_key = api_key
+        self._cluster_id = cluster_id
 
     @asynccontextmanager
     async def _session(self):
         headers = {"Authorization": f"Bearer {self._api_key}"} if self._api_key else {}
-        async with httpx.AsyncClient(headers=headers) as http_client:
+        if self._cluster_id:
+            headers["mcp-cluster-id"] = self._cluster_id
+        async with httpx.AsyncClient(headers=headers, timeout=30.0) as http_client:
             async with streamable_http_client(self._mcp_url, http_client=http_client) as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
@@ -46,16 +49,19 @@ class ObservabilityAgent:
             result = await session.call_tool(name, arguments)
         return _extract_text(result)
 
-    async def run_sql(self, sql: str, query_arg: str = "query") -> str:
+    async def run_sql(self, sql: str, database: Optional[str] = None, query_arg: str = "query") -> str:
         tools = await self.list_tools()
         tool_name = _find_sql_tool_name(tools)
-        return await self.call_tool(tool_name, {query_arg: sql})
+        arguments = {query_arg: sql}
+        if database:
+            arguments["database"] = database
+        return await self.call_tool(tool_name, arguments)
 
 
 def _find_sql_tool_name(tools: list) -> str:
     for tool in tools:
-        haystack = f"{tool.name} {tool.description or ''}".lower()
-        if "sql" in haystack or "query" in haystack:
+        name = tool.name.lower()
+        if "sql" in name or "select" in name:
             return tool.name
     raise NoSQLToolAvailable(f"no SQL capable tool advertised, available tools: {[t.name for t in tools]}")
 
